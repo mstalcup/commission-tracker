@@ -15,6 +15,7 @@ import { logActivity } from '../lib/activity';
 import { buildUpdate, ddb, queryAll, stripEmpty, tables } from '../lib/db';
 import { HttpError, parse, reply, routes } from '../lib/http';
 import { getClient, getCommission, listCommissions, listForCommission } from '../lib/repo';
+import { assertOwnKey, deleteObject } from '../lib/s3';
 
 function checkStage(business: Business, stageId: string) {
   if (!stageById(business.stages, stageId)) throw new HttpError(400, 'Unknown stage', { stageId: ['Pick a valid stage'] });
@@ -41,6 +42,7 @@ export const handler = routes({
     const stageId = input.stageId || firstRequestStage(ctx.business.stages).id;
     checkStage(ctx.business, stageId);
     await checkClient(businessId, input.clientId);
+    input.files?.forEach((f) => assertOwnKey(businessId, f.key));
 
     const now = new Date().toISOString();
     const commission: Commission = stripEmpty({
@@ -90,6 +92,7 @@ export const handler = routes({
     if (input.stageId === '') delete input.stageId;
     if (input.stageId) checkStage(ctx.business, input.stageId);
     if (input.clientId) await checkClient(businessId, input.clientId);
+    input.files?.forEach((f) => assertOwnKey(businessId, f.key));
 
     const now = new Date().toISOString();
     const stageChanged = input.stageId && input.stageId !== existing.stageId;
@@ -106,6 +109,14 @@ export const handler = routes({
         ReturnValues: 'ALL_NEW',
       }),
     );
+
+    // Delete files the user removed from the job.
+    if (input.files) {
+      const kept = new Set(input.files.map((f) => f.key));
+      await Promise.all(
+        (existing.files ?? []).filter((f) => !kept.has(f.key)).map((f) => deleteObject(businessId, f.key).catch(() => undefined)),
+      );
+    }
 
     if (stageChanged) {
       const to = stageById(ctx.business.stages, input.stageId!)?.name ?? input.stageId;
@@ -148,6 +159,7 @@ export const handler = routes({
       );
     }
     await ddb.send(new DeleteCommand({ TableName: tables.commissions, Key: { businessId, commissionId } }));
+    await Promise.all((commission.files ?? []).map((f) => deleteObject(businessId, f.key).catch(() => undefined)));
   },
 });
 

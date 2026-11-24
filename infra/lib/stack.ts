@@ -42,6 +42,10 @@ const ROUTES: Record<string, string[]> = {
     'PATCH /api/commissions/{id}',
     'DELETE /api/commissions/{id}',
   ],
+  payments: ['GET /api/payments', 'POST /api/payments', 'DELETE /api/payments/{id}'],
+  expenses: ['GET /api/expenses', 'POST /api/expenses', 'DELETE /api/expenses/{id}'],
+  dashboard: ['GET /api/dashboard'],
+  uploads: ['POST /api/uploads', 'GET /api/uploads/url'],
 };
 
 export interface CommissionTrackerProps extends cdk.StackProps {
@@ -136,7 +140,7 @@ export class CommissionTrackerStack extends cdk.Stack {
     const devUrl = 'http://localhost:5173';
 
     uploads.addCorsRule({
-      allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
+      allowedMethods: [s3.HttpMethods.POST, s3.HttpMethods.GET],
       allowedOrigins: [siteUrl, devUrl],
       allowedHeaders: ['*'],
       maxAge: 3600,
@@ -225,6 +229,9 @@ export class CommissionTrackerStack extends cdk.Stack {
           minify: true,
           sourceMap: true,
           mainFields: ['module', 'main'],
+          // Bundle the AWS SDK too: the presigner packages aren't in the Lambda runtime,
+          // and bundling pins the exact versions we tested with.
+          externalModules: [],
           // Some CJS deps call require(); give ESM bundles a working require.
           banner: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
         },

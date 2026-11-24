@@ -153,7 +153,7 @@ docs/              setup.md (Google OAuth + first deploy steps)
 ### MVP
 - [x] **Step 0:** Monorepo scaffold, CDK stack, Google login working end-to-end, first login creates the Business and owner User, profile settings (name, website) _(Google sign-in turns on once the OAuth client is added, see docs/setup.md)_
 - [x] **Step 1:** Clients and commissions CRUD, custom stages, stage board, commission detail
-- [ ] **Step 2:** Manual payments and expenses, receipt uploads, dashboard metrics with month-over-month change, Money page
+- [x] **Step 2:** Manual payments and expenses, receipt uploads, dashboard metrics with month-over-month change, Money page
 - [ ] **Step 3:** Timeline, Clients page, visual polish to match the mockup, mobile layout
 
 ### Premium

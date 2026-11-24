@@ -9,6 +9,7 @@ import { CommissionDetail } from './pages/CommissionDetail';
 import { Commissions } from './pages/Commissions';
 import { Dashboard } from './pages/Dashboard';
 import { Landing } from './pages/Landing';
+import { Money } from './pages/Money';
 import { Settings } from './pages/Settings';
 
 export function App() {
@@ -43,6 +44,7 @@ function SignedIn() {
         <Route path="board" element={<Board />} />
         <Route path="commissions" element={<Commissions />} />
         <Route path="commissions/:id" element={<CommissionDetail />} />
+        <Route path="money" element={<Money />} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -1,10 +1,21 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { formatLongDate, formatShortDate } from '@ct/shared';
+import { formatLongDate, formatMoney, formatShortDate } from '@ct/shared';
 import { balanceOf, DueDate, Money, stageOf } from '../components/commission-bits';
 import { CommissionForm } from '../components/CommissionForm';
+import { FileGallery } from '../components/FileGallery';
+import { ExpenseForm, PaymentForm } from '../components/MoneyForms';
 import { Button, Card, ErrorNote, Modal, Spinner } from '../components/ui';
-import { useBusiness, useClientMap, useCommission, useDeleteCommission, useUpdateCommission } from '../lib/queries';
+import {
+  useBusiness,
+  useClientMap,
+  useCommission,
+  useDeleteCommission,
+  useDeleteExpense,
+  useDeletePayment,
+  useUpdateCommission,
+} from '../lib/queries';
+import { DeleteButton, ReceiptLink } from './Money';
 
 export function CommissionDetail() {
   const { id = '' } = useParams();
@@ -16,6 +27,9 @@ export function CommissionDetail() {
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [adding, setAdding] = useState<'payment' | 'expense' | null>(null);
+  const removePayment = useDeletePayment();
+  const removeExpense = useDeleteExpense();
 
   if (detail.isPending) return <Spinner />;
   if (detail.isError) {
@@ -27,7 +41,9 @@ export function CommissionDetail() {
     );
   }
 
-  const { commission: c, activity, payments } = detail.data;
+  const { commission: c, activity, payments, expenses } = detail.data;
+  const spent = expenses.reduce((s, e) => s + e.amountCents, 0);
+  const label = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const client = clients.get(c.clientId ?? '');
   const stage = stageOf(business, c);
   const balance = balanceOf(c);
@@ -107,19 +123,56 @@ export function CommissionDetail() {
           </Card>
 
           <Card className="p-5">
-            <h2 className="eyebrow mb-3">Payments</h2>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="eyebrow">Payments</h2>
+              <Button size="sm" variant="primary" onClick={() => setAdding('payment')}>+ Record payment</Button>
+            </div>
             {payments.length === 0 ? (
               <p className="text-sm text-faint">No payments recorded yet.</p>
             ) : (
               <ul className="divide-y divide-line-soft text-sm">
                 {payments.map((p) => (
-                  <li key={p.paymentId} className="flex justify-between py-2">
-                    <span>{formatShortDate(p.date, year)} · {p.type}</span>
-                    <Money cents={p.amountCents} currency={cur} />
+                  <li key={p.paymentId} className="flex items-center gap-3 py-2">
+                    <span className="w-14 text-muted">{formatShortDate(p.date, year)}</span>
+                    <span className="flex-1 truncate">{label(p.type)} · {label(p.method)}{p.note ? ` · ${p.note}` : ''}</span>
+                    <Money cents={p.amountCents} currency={cur} className="font-semibold text-good" />
+                    <DeleteButton busy={removePayment.isPending && removePayment.variables?.paymentId === p.paymentId} onConfirm={() => removePayment.mutate(p)} />
                   </li>
                 ))}
               </ul>
             )}
+          </Card>
+
+          <Card className="p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="eyebrow">Expenses{spent > 0 && ` · ${formatMoney(spent, cur)}`}</h2>
+              <Button size="sm" onClick={() => setAdding('expense')}>+ Add expense</Button>
+            </div>
+            {expenses.length === 0 ? (
+              <p className="text-sm text-faint">No materials or costs logged against this job.</p>
+            ) : (
+              <ul className="divide-y divide-line-soft text-sm">
+                {expenses.map((e) => (
+                  <li key={e.expenseId} className="flex items-center gap-3 py-2">
+                    <span className="w-14 text-muted">{formatShortDate(e.date, year)}</span>
+                    <span className="flex-1 truncate">{label(e.category)}{e.vendor ? ` · ${e.vendor}` : ''}</span>
+                    {e.receiptKey && <ReceiptLink fileKey={e.receiptKey} />}
+                    <Money cents={e.amountCents} currency={cur} className="font-semibold text-bad" />
+                    <DeleteButton busy={removeExpense.isPending && removeExpense.variables?.expenseId === e.expenseId} onConfirm={() => removeExpense.mutate(e)} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {c.priceCents != null && spent > 0 && (
+              <p className="mt-3 border-t border-line-soft pt-3 text-right text-sm text-muted">
+                Profit on this job so far: <Money cents={(c.paidCents ?? 0) - spent} currency={cur} className="font-semibold text-ink" />
+              </p>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="eyebrow mb-3">Files</h2>
+            <FileGallery commission={c} />
           </Card>
         </div>
 
@@ -139,6 +192,13 @@ export function CommissionDetail() {
 
       <Modal open={editing} onClose={() => setEditing(false)} title="Edit commission" wide>
         <CommissionForm commission={c} onDone={() => setEditing(false)} />
+      </Modal>
+
+      <Modal open={adding === 'payment'} onClose={() => setAdding(null)} title="Record payment">
+        <PaymentForm commissionId={c.commissionId} suggestedCents={balance ?? undefined} onDone={() => setAdding(null)} />
+      </Modal>
+      <Modal open={adding === 'expense'} onClose={() => setAdding(null)} title="Add expense">
+        <ExpenseForm commissionId={c.commissionId} onDone={() => setAdding(null)} />
       </Modal>
 
       <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete commission?">

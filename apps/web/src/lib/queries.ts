@@ -8,9 +8,12 @@ import type {
   Commission,
   CommissionInput,
   CommissionPatch,
+  DashboardSummary,
   Expense,
+  ExpenseInput,
   Me,
   Payment,
+  PaymentInput,
 } from '@ct/shared';
 import { del, get, patch, post } from './api';
 
@@ -163,5 +166,80 @@ export function useDeleteCommission() {
       qc.invalidateQueries({ queryKey: keys.payments });
       qc.invalidateQueries({ queryKey: keys.expenses });
     },
+  });
+}
+
+// ---------------------------------------------------------------- Dashboard
+
+export function useDashboard() {
+  return useQuery({ queryKey: keys.dashboard, queryFn: () => get<DashboardSummary>('/dashboard') });
+}
+
+// ---------------------------------------------------------------- Payments & expenses
+
+export function usePayments(month?: string) {
+  return useQuery({
+    queryKey: [...keys.payments, month ?? 'all'],
+    queryFn: () => get<Payment[]>(`/payments${month ? `?month=${month}` : ''}`),
+  });
+}
+
+export function useExpenses(month?: string) {
+  return useQuery({
+    queryKey: [...keys.expenses, month ?? 'all'],
+    queryFn: () => get<Expense[]>(`/expenses${month ? `?month=${month}` : ''}`),
+  });
+}
+
+/** After any money change: refresh lists, the dashboard and the affected job. */
+function invalidateMoney(qc: ReturnType<typeof useQueryClient>, commissionId?: string) {
+  qc.invalidateQueries({ queryKey: keys.payments });
+  qc.invalidateQueries({ queryKey: keys.expenses });
+  qc.invalidateQueries({ queryKey: keys.dashboard });
+  qc.invalidateQueries({ queryKey: keys.commissions, exact: true });
+  if (commissionId) qc.invalidateQueries({ queryKey: keys.commission(commissionId) });
+}
+
+export function useCreatePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: PaymentInput) => post<Payment>('/payments', input),
+    onSuccess: (p) => invalidateMoney(qc, p.commissionId),
+  });
+}
+
+export function useDeletePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: Payment) => del<void>(`/payments/${p.paymentId}`),
+    onSuccess: (_r, p) => invalidateMoney(qc, p.commissionId),
+  });
+}
+
+export function useCreateExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ExpenseInput) => post<Expense>('/expenses', input),
+    onSuccess: (e) => invalidateMoney(qc, e.commissionId),
+  });
+}
+
+export function useDeleteExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (e: Expense) => del<void>(`/expenses/${e.expenseId}`),
+    onSuccess: (_r, e) => invalidateMoney(qc, e.commissionId),
+  });
+}
+
+// ---------------------------------------------------------------- Files
+
+/** A short-lived link for viewing a private uploaded file. */
+export function useFileUrl(key?: string) {
+  return useQuery({
+    queryKey: ['file', key],
+    queryFn: () => get<{ url: string }>(`/uploads/url?key=${encodeURIComponent(key!)}`).then((r) => r.url),
+    enabled: !!key,
+    staleTime: 30 * 60_000, // URLs are valid for an hour
   });
 }
