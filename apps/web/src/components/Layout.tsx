@@ -1,14 +1,17 @@
+import { Suspense, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { signOut } from '../lib/auth';
 import { useMe } from '../lib/queries';
 import { NewCommissionProvider, useNewCommission } from './NewCommission';
-import { Button, cx } from './ui';
+import { Button, cx, Spinner } from './ui';
 
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/board', label: 'Stage board' },
   { to: '/commissions', label: 'Commissions' },
+  { to: '/timeline', label: 'Timeline' },
   { to: '/money', label: 'Money' },
+  { to: '/clients', label: 'Clients' },
   { to: '/settings', label: 'Settings' },
 ];
 
@@ -33,6 +36,10 @@ function Shell() {
   const newCommission = useNewCommission();
   const business = data?.business;
 
+  useEffect(() => {
+    document.title = business?.name ? `${business.name} · Commission Book` : 'Commission Book';
+  }, [business?.name]);
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-line bg-[radial-gradient(ellipse_at_top_left,#16201b_0%,transparent_60%)]">
@@ -48,7 +55,7 @@ function Shell() {
               </p>
             </div>
           </div>
-          <Button variant="primary" onClick={() => newCommission()}>
+          <Button variant="primary" className="w-full sm:w-auto" onClick={() => newCommission()}>
             <span className="text-lg leading-none">+</span> New commission
           </Button>
         </div>
@@ -78,7 +85,9 @@ function Shell() {
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <Outlet />
+        <Suspense fallback={<Spinner />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

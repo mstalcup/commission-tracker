@@ -154,7 +154,7 @@ docs/              setup.md (Google OAuth + first deploy steps)
 - [x] **Step 0:** Monorepo scaffold, CDK stack, Google login working end-to-end, first login creates the Business and owner User, profile settings (name, website) _(Google sign-in turns on once the OAuth client is added, see docs/setup.md)_
 - [x] **Step 1:** Clients and commissions CRUD, custom stages, stage board, commission detail
 - [x] **Step 2:** Manual payments and expenses, receipt uploads, dashboard metrics with month-over-month change, Money page
-- [ ] **Step 3:** Timeline, Clients page, visual polish to match the mockup, mobile layout
+- [x] **Step 3:** Timeline, Clients page, visual polish to match the mockup, mobile layout
 
 ### Premium
 - [ ] **Phase 2:** Email forwarding sync and Inbox
@@ -164,6 +164,7 @@ docs/              setup.md (Google OAuth + first deploy steps)
 ---
 
 ## Testing
-- Vitest unit tests for the shared helpers and the Lambda handlers (with a mocked DynamoDB client).
-- `cdk synth` before each deploy.
+- `npm test` runs the Vitest unit tests: money/date helpers, the validation schemas, the DynamoDB update builder, and the dashboard math (checked against the mockup's numbers).
+- `npm run typecheck` checks every package, and `npm run synth` builds and synthesizes before a deploy.
+- `node scripts/invoke.mjs <handler> "<METHOD /api/path>" [body]` calls a deployed Lambda directly as a simulated signed-in test user (`test-user-0001`). You can test the API this way without signing in with Google.
 - Manual end-to-end check: Google sign-in → business created → set the name → create a client and a commission → drag it across stages → record a payment and an expense → confirm the dashboard numbers match.

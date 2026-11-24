@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ProfileForm } from '../components/ProfileForm';
 import { StageEditor } from '../components/StageEditor';
 import { Card, PageHeader } from '../components/ui';
@@ -6,6 +8,12 @@ import { useBusiness, useMe } from '../lib/queries';
 export function Settings() {
   const business = useBusiness();
   const { data } = useMe();
+  const { hash } = useLocation();
+
+  // Jump to a section when linked as /settings#stages.
+  useEffect(() => {
+    if (hash) document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' });
+  }, [hash]);
 
   return (
     <div className="space-y-10">
