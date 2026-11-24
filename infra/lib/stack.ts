@@ -28,6 +28,20 @@ export const GOOGLE_PARAM_SECRET = '/commission-tracker/google-client-secret';
  */
 const ROUTES: Record<string, string[]> = {
   business: ['GET /api/me', 'PATCH /api/business'],
+  clients: [
+    'GET /api/clients',
+    'POST /api/clients',
+    'GET /api/clients/{id}',
+    'PATCH /api/clients/{id}',
+    'DELETE /api/clients/{id}',
+  ],
+  commissions: [
+    'GET /api/commissions',
+    'POST /api/commissions',
+    'GET /api/commissions/{id}',
+    'PATCH /api/commissions/{id}',
+    'DELETE /api/commissions/{id}',
+  ],
 };
 
 export interface CommissionTrackerProps extends cdk.StackProps {

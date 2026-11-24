@@ -3,7 +3,10 @@ import { Layout } from './components/Layout';
 import { ErrorNote, Spinner } from './components/ui';
 import { useAuth } from './lib/auth';
 import { useMe } from './lib/queries';
+import { Board } from './pages/Board';
 import { Callback } from './pages/Callback';
+import { CommissionDetail } from './pages/CommissionDetail';
+import { Commissions } from './pages/Commissions';
 import { Dashboard } from './pages/Dashboard';
 import { Landing } from './pages/Landing';
 import { Settings } from './pages/Settings';
@@ -37,6 +40,9 @@ function SignedIn() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
+        <Route path="board" element={<Board />} />
+        <Route path="commissions" element={<Commissions />} />
+        <Route path="commissions/:id" element={<CommissionDetail />} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

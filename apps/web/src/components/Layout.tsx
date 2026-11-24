@@ -1,10 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { signOut } from '../lib/auth';
 import { useMe } from '../lib/queries';
-import { cx } from './ui';
+import { NewCommissionProvider, useNewCommission } from './NewCommission';
+import { Button, cx } from './ui';
 
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
+  { to: '/board', label: 'Stage board' },
+  { to: '/commissions', label: 'Commissions' },
   { to: '/settings', label: 'Settings' },
 ];
 
@@ -16,8 +19,17 @@ export function LampIcon({ className }: { className?: string }) {
   );
 }
 
-export function Layout({ actions }: { actions?: React.ReactNode }) {
+export function Layout() {
+  return (
+    <NewCommissionProvider>
+      <Shell />
+    </NewCommissionProvider>
+  );
+}
+
+function Shell() {
   const { data } = useMe();
+  const newCommission = useNewCommission();
   const business = data?.business;
 
   return (
@@ -35,7 +47,9 @@ export function Layout({ actions }: { actions?: React.ReactNode }) {
               </p>
             </div>
           </div>
-          {actions}
+          <Button variant="primary" onClick={() => newCommission()}>
+            <span className="text-lg leading-none">+</span> New commission
+          </Button>
         </div>
         <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 pb-2 sm:px-6">
           {NAV.map((n) => (

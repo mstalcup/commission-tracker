@@ -37,7 +37,7 @@ export async function queryAll<T>(input: QueryCommandInput): Promise<T[]> {
 /**
  * Builds an UpdateExpression from a partial object.
  * - undefined values are skipped (field not sent)
- * - '' (empty string) removes the attribute (field cleared)
+ * - '' or null removes the attribute (field cleared)
  */
 export function buildUpdate(fields: Record<string, unknown>) {
   const sets: string[] = [];
@@ -47,7 +47,7 @@ export function buildUpdate(fields: Record<string, unknown>) {
   for (const [k, v] of Object.entries(fields)) {
     if (v === undefined) continue;
     names[`#${k}`] = k;
-    if (v === '') removes.push(`#${k}`);
+    if (v === '' || v === null) removes.push(`#${k}`);
     else {
       sets.push(`#${k} = :${k}`);
       values[`:${k}`] = v;
@@ -61,4 +61,9 @@ export function buildUpdate(fields: Record<string, unknown>) {
     ExpressionAttributeNames: names,
     ExpressionAttributeValues: Object.keys(values).length ? values : undefined,
   };
+}
+
+/** Drops empty optional strings / undefined so they aren't stored. */
+export function stripEmpty<T extends object>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== '' && v !== undefined)) as T;
 }

@@ -117,8 +117,11 @@ export const CommissionInputSchema = z
   .strict();
 export type CommissionInput = z.infer<typeof CommissionInputSchema>;
 
-/** PATCH accepts any subset of the create fields. */
-export const CommissionPatchSchema = CommissionInputSchema.partial();
+/** PATCH accepts any subset of the create fields; null clears a price. */
+export const CommissionPatchSchema = CommissionInputSchema.partial().extend({
+  priceCents: cents.nullable().optional(),
+  depositCents: cents.nullable().optional(),
+});
 export type CommissionPatch = z.infer<typeof CommissionPatchSchema>;
 
 export interface Commission {
