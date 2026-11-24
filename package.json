@@ -1,0 +1,24 @@
+{
+  "name": "commission-tracker",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*",
+    "infra"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @ct/web",
+    "build": "npm run build -w @ct/web",
+    "typecheck": "tsc -p packages/shared && tsc -p services/api && tsc -p apps/web && tsc -p infra",
+    "test": "vitest run",
+    "synth": "npm run build && npm run cdk -w @ct/infra -- synth --quiet",
+    "deploy": "npm run build && npm run cdk -w @ct/infra -- deploy --require-approval never --outputs-file ../cdk-outputs.json"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.1"
+  }
+}

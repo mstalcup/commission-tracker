@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+/* Design tokens taken from the dashboard mockup. */
+@theme {
+  --font-display: 'Bebas Neue', 'Oswald', Impact, sans-serif;
+  --font-sans: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-bg: #0d100f;
+  --color-panel: #151a18;
+  --color-panel-2: #1b211f;
+  --color-line: #2a312e;
+  --color-line-soft: #222826;
+  --color-ink: #eef2ef;
+  --color-muted: #9aa49f;
+  --color-faint: #6c7571;
+
+  --color-accent: #5fb487;
+  --color-accent-strong: #4fa37a;
+  --color-accent-ink: #0d1a13;
+  --color-good: #7fd6a0;
+  --color-bad: #f4806c;
+  --color-warn: #e8c65e;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Labels like "OPEN JOBS" in the mockup */
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+}
+
+input,
+select,
+textarea {
+  color-scheme: dark;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

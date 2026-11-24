@@ -77,11 +77,12 @@ The MVP doesn't build these features, but it adds the fields they will need:
 ## Architecture
 
 ```
-Browser (React SPA) ──► CloudFront ──► S3 (static site)
+Browser (React SPA) ──► CloudFront ──┬─► S3 (static site)          /*
+     │                               └─► API Gateway HTTP API      /api/*  (same domain, so no CORS)
      │
-     ├─► Cognito Hosted UI ("Sign in with Google") ─► JWT
-     │
-     └─► API Gateway HTTP API
+     └─► Cognito Hosted UI ("Sign in with Google") ─► JWT (sent as Authorization: Bearer)
+
+API Gateway HTTP API
            ├─ Cognito JWT authorizer on every route (bad/missing tokens never reach our code)
            └─ routes → one Lambda per resource
                  /me, /business        → business-fn
@@ -98,7 +99,7 @@ Browser (React SPA) ──► CloudFront ──► S3 (static site)
 
 - **Auth:**
   - The Cognito domain is a Cognito-provided prefix (`<name>.auth.<region>.amazoncognito.com`).
-  - A **post-confirmation trigger** creates the Business and owner User records on first login.
+  - On a user's first API call, the API creates their Business and owner User records. This is a single conditional DynamoDB transaction, so it's safe if two calls arrive at once. It's more reliable than a Cognito trigger, which doesn't always fire for Google sign-ins.
   - Each Lambda reads the user id (`sub`) from the verified token, looks up the user's `businessId` and role, and scopes every query to that business.
 - **Google OAuth client:** This is a one-time manual setup step. The client is created in Google Cloud Console, and its id and secret are stored in SSM Parameter Store, where CDK reads them.
 - **Web:**
@@ -135,7 +136,7 @@ Every form has rules such as "title is required" and "price must be ≥ 0". The 
 
 ```
 apps/web/          React SPA
-services/api/      Lambda handlers: business, clients, commissions, payments, expenses, dashboard, uploads, cognito-post-confirm
+services/api/      Lambda handlers: business, clients, commissions, payments, expenses, dashboard, uploads
 packages/shared/   zod schemas + TS types, money/date helpers
 infra/             CDK app: bin/app.ts, lib/stack.ts (constructs for auth, data, api, web)
 docs/              setup.md (Google OAuth + first deploy steps)
@@ -150,7 +151,7 @@ docs/              setup.md (Google OAuth + first deploy steps)
 ## Progress
 
 ### MVP
-- [ ] **Step 0:** Monorepo scaffold, CDK stack, Google login working end-to-end, first login creates the Business and owner User, profile settings (name, website)
+- [x] **Step 0:** Monorepo scaffold, CDK stack, Google login working end-to-end, first login creates the Business and owner User, profile settings (name, website) _(Google sign-in turns on once the OAuth client is added, see docs/setup.md)_
 - [ ] **Step 1:** Clients and commissions CRUD, custom stages, stage board, commission detail
 - [ ] **Step 2:** Manual payments and expenses, receipt uploads, dashboard metrics with month-over-month change, Money page
 - [ ] **Step 3:** Timeline, Clients page, visual polish to match the mockup, mobile layout
