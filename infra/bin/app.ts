@@ -1,8 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { GetParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
+import { AWS_ACCOUNT, AWS_PROFILE, AWS_REGION } from '../config';
 import { CommissionTrackerStack, GOOGLE_PARAM_ID, GOOGLE_PARAM_SECRET } from '../lib/stack';
-
-const region = process.env.CDK_DEFAULT_REGION ?? 'us-east-1';
 
 /**
  * Google login is only switched on once its client id/secret exist in SSM
@@ -10,7 +9,7 @@ const region = process.env.CDK_DEFAULT_REGION ?? 'us-east-1';
  * so the first deploy can happen before Google is configured.
  */
 async function googleConfigured(): Promise<boolean> {
-  const ssm = new SSMClient({ region });
+  const ssm = new SSMClient({ region: AWS_REGION, profile: process.env.AWS_PROFILE ?? AWS_PROFILE });
   try {
     await ssm.send(new GetParameterCommand({ Name: GOOGLE_PARAM_ID }));
     await ssm.send(new GetParameterCommand({ Name: GOOGLE_PARAM_SECRET }));
@@ -27,6 +26,6 @@ if (!google) {
 
 const app = new cdk.App();
 new CommissionTrackerStack(app, 'CommissionTracker', {
-  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region },
+  env: { account: AWS_ACCOUNT, region: AWS_REGION },
   googleEnabled: google,
 });

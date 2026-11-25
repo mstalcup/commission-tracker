@@ -21,7 +21,9 @@ if (!handler || !routeKey) {
   process.exit(1);
 }
 
-const aws = (...args) => execFileSync('aws', args, { encoding: 'utf8' }).trim();
+// Same account/region the app is deployed to (infra/config.ts).
+const aws = (...args) =>
+  execFileSync('aws', [...args, '--profile', process.env.AWS_PROFILE ?? 'mastalcup', '--region', 'us-west-2'], { encoding: 'utf8' }).trim();
 const names = JSON.parse(aws('lambda', 'list-functions', '--query', 'Functions[].FunctionName', '--output', 'json'));
 const fn = names.find((n) => n.startsWith(`CommissionTracker-${handler}fn`));
 if (!fn) throw new Error(`No deployed Lambda for handler "${handler}"`);

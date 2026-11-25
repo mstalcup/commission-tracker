@@ -4,13 +4,13 @@ Everything deploys to a single AWS environment (prod) with one command.
 
 ## Prerequisites
 - Node.js 22+ and npm
-- AWS CLI v2 with credentials for the target account (`aws configure`). The default region is `us-east-1`.
+- AWS CLI v2 with a profile named `mastalcup` for account `629115319102`. The app deploys to `us-west-2`. All three are pinned in `infra/config.ts` (and `infra/cdk.json`), so deploys always go to that account and region no matter which profile is your default.
 - A Google account, used to create the OAuth client
 
 ## 1. Install and bootstrap (one time)
 ```sh
 npm install
-npx -w @ct/infra cdk bootstrap        # once per AWS account/region
+npx -w @ct/infra cdk bootstrap aws://629115319102/us-west-2   # once per AWS account/region (already done)
 ```
 
 ## 2. First deploy
@@ -19,7 +19,7 @@ npm run deploy
 ```
 This builds the web app and runs `cdk deploy`. The stack outputs are written to `cdk-outputs.json`:
 - `SiteUrl`: the app, e.g. `https://dxxxxxxxx.cloudfront.net`
-- `GoogleRedirectUri`: needed in the next step. It is always `https://commission-tracker-<AWS account id>.auth.us-east-1.amazoncognito.com/oauth2/idpresponse`.
+- `GoogleRedirectUri`: needed in the next step. It is always `https://commission-tracker-629115319102.auth.us-west-2.amazoncognito.com/oauth2/idpresponse`.
 
 Until Google is configured, the app loads but sign-in is disabled.
 
@@ -32,12 +32,12 @@ Until Google is configured, the app loads but sign-in is disabled.
    - While the app is in **Testing** mode, add your own Google address under *Test users*. Click **Publish app** when you want anyone to be able to sign in. These basic scopes don't need Google verification.
 3. Open **APIs & Services → Credentials → Create credentials → OAuth client ID**:
    - Application type: **Web application**
-   - Authorized JavaScript origins: `https://commission-tracker-<account id>.auth.us-east-1.amazoncognito.com`
+   - Authorized JavaScript origins: `https://commission-tracker-629115319102.auth.us-west-2.amazoncognito.com`
    - Authorized redirect URIs: the `GoogleRedirectUri` output from step 2
 4. Copy the client ID and client secret into SSM Parameter Store. Use PowerShell or cmd; in Git Bash, prefix the commands with `MSYS_NO_PATHCONV=1`.
    ```sh
-   aws ssm put-parameter --name /commission-tracker/google-client-id --type String --value "<client id>"
-   aws ssm put-parameter --name /commission-tracker/google-client-secret --type String --value "<client secret>"
+   aws ssm put-parameter --name /commission-tracker/google-client-id --type String --value "<client id>" --profile mastalcup --region us-west-2
+   aws ssm put-parameter --name /commission-tracker/google-client-secret --type String --value "<client secret>" --profile mastalcup --region us-west-2
    ```
    CloudFormation reads these at deploy time, so the values never appear in the repo or in the template.
 
